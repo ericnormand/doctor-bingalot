@@ -4,14 +4,22 @@
                [twitter.callbacks.handlers]
                [twitter.api.restful :as rest]))
 
-(defn authenticate []  (oauth/make-oauth-creds
-                        (or (System/getenv "TWITTER_TOKEN") (throw (RuntimeException. "please define TWITTER_TOKEN")))
-                        (or (System/getenv "TWITTER_SECRET") "carrot") ))
+(defn get-required-env [name]
+  (or (System/getenv name) (throw (RuntimeException. (str "please define " name)))))
 
-(defn -main []
-  (let [creds (authenticate)]
+(defn authenticate []  (oauth/make-oauth-creds
+                        (get-required-env "TWITTER_CONSUMER_KEY")
+                        (get-required-env "TWITTER_CONSUMER_SECRET")
+                        (get-required-env "TWITTER_ACCESS_TOKEN")
+                        (get-required-env "TWITTER_ACCESS_SECRET") ))
+
+(defn -main [say-what]
+  (let [creds (authenticate)
+        tweet-this (or say-what "Bing!")]
        (rest/statuses-update :oauth-creds creds
-                             :params {:status "hello world"})))
+                             :params {:status tweet-this})
+       (println "We did it! (maybe)"))
+  (shutdown-agents))
 
 (defn foo
   "I don't do a whole lot."
